@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.env
+
+# Raw datasets
+**/III_data_raw/
+
+# Exercises temporarily excluded
+/Exercise_II_Urban_Heat_BGI/
+
+# System
+.DS_Store

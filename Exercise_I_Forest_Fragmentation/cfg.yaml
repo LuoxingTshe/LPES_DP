@@ -1,0 +1,22 @@
+# Exercise I – parameters. All paths are relative to this file.
+paths:
+  raw: III_data_raw
+  processed: IV_data_processed
+  tables: VI_outputs/tables
+  figures: VI_outputs/figures
+  maps: VI_outputs/maps
+
+files:
+  lulc: LULC Data - Arealstatistik/arealstatistik-zeitreihe_2056.gpkg
+  boundaries: swissBOUNDARIES3D/swissBOUNDARIES3D_1_5_LV95_LN02.gdb
+
+time_A: "85"          # AS85 (BE ≈ 1981)
+time_B: "18"          # AS18 (BE ≈ 2014); AS25 is empty for Bern
+forest_codes: [50, 51, 52, 53, 54]
+
+units:
+  canton: 2
+  urban: 351          # Bern
+  rural: 584          # Lauterbrunnen
+neighbourhood: 4      # Task 2 斑块连通性 + Task 3 edge；敏感性检验时改成 8
+nodata: 255

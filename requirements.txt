@@ -1,0 +1,14 @@
+geopandas
+pyogrio
+rasterio
+scipy
+pandas
+pylandstats
+statsmodels
+scikit-learn
+esda
+libpysal
+matplotlib
+matplotlib-scalebar
+pyyaml
+ipykernel
