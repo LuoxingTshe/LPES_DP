@@ -1,0 +1,4 @@
+unit,area_ha,forest_A_ha,forest_B_ha,forest_A_pct,forest_B_pct,change_ha,mean_year_A,mean_year_B,delta_t
+canton,593884,154158,155723,25.96,26.22,1565,1980.9,2014.0,33.1
+urban,5162,1675,1668,32.45,32.31,-7,1981.0,2013.0,32.0
+rural,16465,1778,2026,10.8,12.3,248,1980.3,2014.3,34.0
