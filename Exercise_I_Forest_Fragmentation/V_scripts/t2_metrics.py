@@ -1,24 +1,3 @@
-"""
-t2_metrics.py – Task 2：破碎化几何 (FG1)、三类重分类、meff (CBC)、ED、PD、LPI。
-
-思路：重活全部交给公开库，本文件只负责"把库函数按顺序串起来"。
-    geopandas.read_file(where=...)    读矢量时直接用 SQL 筛选，不在 pandas 里筛
-    geopandas.dissolve / clip          合并亚区、裁到伯尔尼州
-    rasterio.features.rasterize        道路/铁路线 -> 栅格
-    scipy.ndimage.label / sum_labels   斑块识别 + 每个斑块的面积（用于 CBC meff）
-    rasterio.mask.mask                 按单元边界裁剪栅格
-    pylandstats.Landscape              ED、PD、LPI、斑块数、平均斑块面积、meff(CUT)
-
-读取（Task 1 的输出）：IV_data_processed/lulc_A.tif, lulc_B.tif（同时作为参考栅格提供网格信息）
-读取（原始数据）    ：swissTLMRegio 道路和铁路、swissBOUNDARIES3D、生物地理分区
-写出：
-    IV_data_processed/barrier_lines.tif        道路/铁路线栅格（0/1）
-    IV_data_processed/landscape_A.tif, _B.tif  0 = 其他, 1 = 森林, 2 = 障碍, 255 = 无数据
-    IV_data_processed/units.geojson            所有统计单元的边界（Task 3/4 还会用）
-    VI_outputs/tables/T2_metrics.csv           长表：每个单元 × 每个时间一行
-    VI_outputs/tables/T2_change.csv            宽表：A、B 并排 + 变化百分比
-    VI_outputs/figures/T2_landscape_quicklook.png
-"""
 import numpy as np
 import pandas as pd
 import geopandas as gpd
