@@ -1,13 +1,13 @@
 variable,selected,aic_univariate,step2_correlation,vif,step4_aic
 elev,False,5821.557,dropped (|r| > 0.7 with pop_500m),,
-slope,True,5657.305,kept,1.48,
+slope,True,5657.305,kept,1.476,
 tri,False,5724.523,dropped (|r| > 0.7 with slope),,
 tpi,True,5807.354,kept,1.06,
-dist_water,False,5828.173,kept,1.136,dropped (AIC 4640.4 -> 4649.9)
-pop_500m,True,5662.931,kept,2.259,
-access_road,False,5833.923,kept,1.118,dropped (AIC 4633.2 -> 4632.9)
-dist_bauzone,False,5825.418,kept,2.471,dropped (AIC 4635.2 -> 4633.2)
-dist_mainroad,False,5822.201,kept,1.577,dropped (AIC 4632.6 -> 4640.4)
-settl_chg,False,5791.4,kept,1.316,dropped (AIC 4632.9 -> 4632.6)
+dist_water,False,5828.173,kept,1.138,dropped (AIC 4658.2 -> 4667.6)
+pop_500m,True,5682.681,kept,2.252,
+access_road,False,5833.923,kept,1.117,dropped (AIC 4652.3 -> 4651.9)
+dist_bauzone,False,5825.418,kept,2.468,dropped (AIC 4654.1 -> 4652.3)
+dist_mainroad,False,5822.201,kept,1.577,dropped (AIC 4651.9 -> 4658.2)
+settl_chg,False,5791.4,kept,1.318,dropped (AIC 4651.9 -> 4651.9)
 forest_share,True,5195.041,kept,1.265,
-dist_edge,True,5132.872,kept,1.534,
+dist_edge,True,5132.872,kept,1.533,

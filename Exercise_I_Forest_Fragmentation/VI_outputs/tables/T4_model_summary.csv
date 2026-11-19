@@ -1,3 +1,3 @@
 region,model,n,events,event_rate_pct,aic,mcfadden_r2,auc,moran_I_resid,moran_p
-Mittelland,loss,5475,115,2.1005,974.706,0.1374,0.7562,0.014,0.024
-Alpennordflanke,gain,19358,671,3.4663,4649.9187,0.2045,0.8567,0.0054,0.038
+Mittelland,loss,5475,115,2.1005,978.3096,0.1342,0.7408,0.0182,0.014
+Alpennordflanke,gain,19358,671,3.4663,4667.6283,0.2015,0.855,0.0058,0.026

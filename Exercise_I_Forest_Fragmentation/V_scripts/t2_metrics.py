@@ -1,3 +1,4 @@
+"""Task 2 – FG1 fragmentation geometry, three-class landscape, meff (CBC and CUT), ED, PD, LPI at several scales."""
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -13,8 +14,8 @@ from matplotlib.colors import ListedColormap
 
 from V_scripts import utils, t1_grid
 
-# 三类景观的编码
-OTHER = 0      # 非障碍的其他用地（农田、草地、水体、岩石……）
+# landscape classes
+OTHER = 0      # non-barrier land use (agriculture, grassland, water, rock, ...)
 FOREST = 1
 BARRIER = 2
 
@@ -23,7 +24,6 @@ RAIL_LAYER = "TLMRegio_Railway"
 REGION_LAYER = "N2020_Revision_BiogeoRegion"
 REGION_NAME_TABLE = "RegionName_Catalogue"
 
-# 输出表里要比较 A/B 的指标
 METRICS = [
     "forest_ha",
     "meff_forest_cbc_km2",
@@ -37,11 +37,8 @@ METRICS = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# 1. 统计单元：州、两个市镇、州内的生物地理区
-# ---------------------------------------------------------------------------
 def sql_in(codes):
-    """把 [1, 2, 3] 变成字符串 "1, 2, 3"，用在 SQL 的 IN (...) 里。"""
+    """[1, 2, 3] -> "1, 2, 3" for an SQL IN (...) clause."""
     text = ""
     for code in codes:
         if text != "":
@@ -52,10 +49,8 @@ def sql_in(codes):
 
 def load_units(cfg):
     """
-    返回一个 GeoDataFrame，每行一个统计单元，列：unit（名称）、scale（尺度）、geometry。
-
-    where= 参数会把 SQL 条件交给 GDAL，在读文件时就筛掉不要的要素，
-    不用先把整张表读进来再用 pandas 筛选。
+    One row per reporting unit (columns unit, scale, geometry): canton, two municipalities and the
+    biogeographical regions clipped to the canton. where= filters features while reading.
     """
     gdb = cfg["paths"]["raw"] / cfg["files"]["boundaries"]
     biogeo = cfg["paths"]["raw"] / cfg["files"]["biogeo"]
@@ -67,17 +62,15 @@ def load_units(cfg):
     rural = gpd.read_file(gdb, layer=t1_grid.MUNICIPALITY_LAYER,
                           where="BFS_NUMMER = " + str(cfg["units"]["rural"]))
 
-    # 生物地理区：Mittelland 等区由几个亚区组成 -> dissolve 按 RegionName 合并成一个面
+    # regions consist of several sub-regions -> dissolve by RegionName
     regions = gpd.read_file(biogeo, layer=REGION_LAYER)
     regions = regions.dissolve(by="RegionName", as_index=False)
     regions = regions[regions["RegionName"].isin(cfg["regions"])]
 
-    # 区名表没有几何，读出来就是普通 DataFrame；merge 相当于 GIS 里的"属性连接"
-    names = gpd.read_file(biogeo, layer=REGION_NAME_TABLE)
+    names = gpd.read_file(biogeo, layer=REGION_NAME_TABLE)        # attribute table without geometry
     regions = regions.merge(names, left_on="RegionName", right_on="CODERegionName")
 
-    # swissBOUNDARIES3D 带 Z 值，CRS 是"LV95 + LN02 高程"的复合坐标系。
-    # 去掉 Z 之后平面坐标就是 LV95，用 set_crs 把 CRS 标成纯 EPSG:2056，两个图层才能 clip。
+    # swissBOUNDARIES3D has a compound CRS (LV95 + LN02 heights); after dropping Z it is plain EPSG:2056
     canton["geometry"] = canton.geometry.force_2d()
     canton = canton.set_crs(t1_grid.CRS, allow_override=True)
     regions["geometry"] = regions.geometry.force_2d()
@@ -111,37 +104,27 @@ def load_units(cfg):
     return units
 
 
-# ---------------------------------------------------------------------------
-# 2. FG1 障碍：Arealstatistik 的建成区/交通用地 + swissTLMRegio 主要道路和铁路
-# ---------------------------------------------------------------------------
 def barrier_lines(cfg, profile):
     """
-    把主要道路和铁路栅格化成 0/1 数组（1 = 线经过的像元）。
-
-    为什么还要矢量线：Arealstatistik 是每公顷一个抽样点，一条 25 m 宽的高速公路
-    只有一部分像元的点恰好落在路面上，栅格里的道路是断断续续的，挡不住斑块连通。
-    矢量线栅格化后是连续的。
-
-    all_touched：
-        False（默认）= 只烧线"主要经过"的像元，得到 8 邻接的细线。
-                       8 邻接的线足以切断 4 邻域的斑块。
-        True         = 线碰到的像元全部烧成 1，线变粗，变成 4 邻接，
-                       用 8 邻域识别斑块时才需要（否则斑块会从对角"漏"过去）。
+    Main roads and railways rasterised to 0/1. Needed because the 100 m sample points capture roads
+    only intermittently, so roads in the Arealstatistik raster do not cut patches.
+    all_touched=False gives 8-connected lines (enough to cut 4-neighbour patches);
+    all_touched=True gives thicker, 4-connected lines, required for the 8-neighbour rule.
     """
     gdb = cfg["paths"]["raw"] / cfg["files"]["tlmregio"]
 
-    # CONSTRUCT = 2 是隧道：隧道上方的地面是连通的，不算障碍
+    # CONSTRUCT = 2 are tunnels: the ground above stays connected
     road_where = "OBJVAL IN (" + sql_in(cfg["road_codes"]) + ") AND CONSTRUCT <> 2"
     rail_where = "OBJVAL IN (" + sql_in(cfg["rail_codes"]) + ") AND CONSTRUCT <> 2"
     roads = gpd.read_file(gdb, layer=ROAD_LAYER, where=road_where)
     rails = gpd.read_file(gdb, layer=RAIL_LAYER, where=rail_where)
-    print("  道路线段：", len(roads), "  铁路线段：", len(rails))
+    print("  road segments:", len(roads), "  rail segments:", len(rails))
 
     geometries = list(roads.geometry.force_2d()) + list(rails.geometry.force_2d())
     all_touched = cfg["neighbourhood"] == 8
 
     lines = rasterize(
-        geometries,                                 # 只给几何时，每条线写入 default_value
+        geometries,
         out_shape=(profile["height"], profile["width"]),
         transform=profile["transform"],
         fill=0,
@@ -153,10 +136,7 @@ def barrier_lines(cfg, profile):
 
 
 def make_landscape(lulc, lines, cfg):
-    """
-    72 类 + 障碍线 -> 三类景观。后写的覆盖先写的，所以障碍优先于森林：
-    一条主路穿过森林，那一格就是障碍，森林在这里被切开。
-    """
+    """72 classes + barrier lines -> other / forest / barrier. Barriers are written last, so a road cuts the forest."""
     nodata = cfg["nodata"]
     has_data = lulc > 0
 
@@ -168,23 +148,15 @@ def make_landscape(lulc, lines, cfg):
     return land
 
 
-# ---------------------------------------------------------------------------
-# 3. meff，CBC 方法 (Moser et al. 2007)
-# ---------------------------------------------------------------------------
 def label_patches(binary, neighbourhood):
     """
-    在全瑞士网格上识别斑块，返回：
-        labels    : 和 binary 同形状，每个像元写着它所属斑块的编号（0 = 不是斑块）
-        patch_ids : 1, 2, ..., n
-        full_size : 每个斑块的完整面积（像元数），不管它有没有伸出统计单元
-
-    在全瑞士而不是单元内部识别斑块，就是 CBC 的关键：
-    跨越单元边界的斑块保留它的完整面积 A_i_cmpl。
+    Label patches on the whole Swiss grid; return labels, patch ids and the complete size of each patch.
+    Labelling on the whole grid (not inside a unit) keeps the full area of cross-boundary patches (CBC).
     """
     if neighbourhood == 4:
-        structure = ndimage.generate_binary_structure(2, 1)   # 十字形：上下左右
+        structure = ndimage.generate_binary_structure(2, 1)
     else:
-        structure = ndimage.generate_binary_structure(2, 2)   # 3×3：再加四个对角
+        structure = ndimage.generate_binary_structure(2, 2)
     labels, n = ndimage.label(binary, structure=structure)
     patch_ids = np.arange(1, n + 1)
     full_size = ndimage.sum_labels(binary, labels, patch_ids)
@@ -193,13 +165,8 @@ def label_patches(binary, neighbourhood):
 
 def meff_cbc(labels, patch_ids, full_size, unit_mask):
     """
-    CBC 有效网格尺寸：meff = (1 / A_total) × Σ A_i × A_i_cmpl
-
-        A_i       : 斑块 i 落在单元内的面积  -> 对单元 mask 按斑块编号求和
-        A_i_cmpl  : 斑块 i 的完整面积        -> label_patches 已经算好
-        A_total   : 单元总面积（有数据的像元，含障碍）
-
-    1 像元 = 1 ha，结果从 ha 换算成 km²（÷ 100）。
+    Effective mesh size, CBC method (Moser et al. 2007): meff = (1 / A_total) * sum(A_i * A_i_cmpl),
+    with A_i the patch area inside the unit and A_i_cmpl its complete area. Result in km² (1 cell = 1 ha).
     """
     inside_size = ndimage.sum_labels(unit_mask, labels, patch_ids)
     total_area = unit_mask.sum()
@@ -207,27 +174,18 @@ def meff_cbc(labels, patch_ids, full_size, unit_mask):
     return meff_ha / 100.0
 
 
-# ---------------------------------------------------------------------------
-# 4. 其他指标交给 pylandstats
-# ---------------------------------------------------------------------------
 def clip_to_unit(tif_path, geometry, nodata):
-    """
-    按单元边界裁剪栅格。crop=True 会把结果裁到单元的外接矩形，
-    边界外的像元填 nodata。规则和 rasterize 一样：像元中心在面内才算在内。
-    """
+    """Clip a raster to a unit (crop to its bounding box, cells outside = nodata); return (array, transform)."""
     with rasterio.open(tif_path) as src:
         clipped, clipped_transform = rasterio.mask.mask(src, [geometry], crop=True, nodata=nodata)
-    return clipped[0], clipped_transform     # mask 返回 (波段, 行, 列)，取第 1 个波段
+    return clipped[0], clipped_transform
 
 
 def pylandstats_metrics(array, transform, cfg):
-    """
-    用 pylandstats 计算森林这一类 (class_val=FOREST) 的类别级指标。
-    nodata 像元不计入景观面积；count_boundary=False 表示和 nodata 相邻的边不算边缘。
-    """
+    """Class-level metrics for forest; nodata cells are not part of the landscape."""
     landscape = pls.Landscape(
         array,
-        res=(transform.a, -transform.e),            # 像元宽、高直接从 transform 读（e 是负数）
+        res=(transform.a, -transform.e),
         nodata=cfg["nodata"],
         transform=transform,
         neighborhood_rule=str(cfg["neighbourhood"]),
@@ -239,17 +197,14 @@ def pylandstats_metrics(array, transform, cfg):
         "LPI_pct": landscape.largest_patch_index(class_val=FOREST),
         "n_patches": landscape.number_of_patches(class_val=FOREST),
         "AREA_MN_ha": landscape.area_mn(class_val=FOREST),
-        # pylandstats 的 meff 是"切割法"(CUT)：伸出单元的斑块被截断，用来和 CBC 对比
+        # pylandstats uses the cutting-out method (CUT), reported for comparison with CBC
         "meff_forest_cut_km2": landscape.effective_mesh_size(class_val=FOREST) / 100.0,
     }
     return result
 
 
-# ---------------------------------------------------------------------------
-# 5. 结果表和检查图
-# ---------------------------------------------------------------------------
 def change_table(table, out_path):
-    """长表 -> 宽表：每个单元一行，每个指标给出 A、B 和变化百分比。"""
+    """Long table -> one row per unit with A, B and the change in percent for each metric."""
     rows = []
     for unit_name in table["unit"].unique():
         a = table[(table["unit"] == unit_name) & (table["time"] == "A")].iloc[0]
@@ -266,12 +221,12 @@ def change_table(table, out_path):
 
 
 def quicklook(paths, labels, canton_geometry, nodata, out_path):
-    """伯尔尼州 A、B 两期三类景观并排显示，用来目视检查障碍线是否连续。"""
-    colours = ListedColormap(["#e8e4d8", "#4c8c4a", "#c0392b"])   # 其他 / 森林 / 障碍
+    """Three-class landscape of A and B side by side, to check that barrier lines are continuous."""
+    colours = ListedColormap(["#e8e4d8", "#4c8c4a", "#c0392b"])   # other / forest / barrier
     fig, axes = plt.subplots(1, 2, figsize=(16, 9))
     for i in range(2):
         array, _ = clip_to_unit(paths[i], canton_geometry, nodata)
-        shown = np.ma.masked_equal(array, nodata)                   # nodata 不上色
+        shown = np.ma.masked_equal(array, nodata)
         axes[i].imshow(shown, cmap=colours, vmin=-0.5, vmax=2.5, interpolation="nearest")
         axes[i].set_title(labels[i] + ": beige other, green forest, red barrier (FG1)")
         axes[i].set_axis_off()
@@ -279,25 +234,19 @@ def quicklook(paths, labels, canton_geometry, nodata, out_path):
     plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# 入口
-# ---------------------------------------------------------------------------
 def run(cfg):
     processed = cfg["paths"]["processed"]
     nodata = cfg["nodata"]
     nb = cfg["neighbourhood"]
-    # 参考栅格：lulc_A.tif 的 profile 提供 transform、crs、行列数，后面所有输出都照它写
-    _, profile = utils.read_tif(processed / "lulc_A.tif")
+    _, profile = utils.read_tif(processed / "lulc_A.tif")      # reference raster
 
-    # 1. 统计单元
     units = load_units(cfg)
     units.to_file(processed / "units.geojson", driver="GeoJSON")
 
-    # 2. 障碍线（两期共用同一套路网，见局限性说明）
+    # the same road network is used for both time steps (see limitations)
     lines = barrier_lines(cfg, profile)
     utils.save_tif(lines, processed / "barrier_lines.tif", profile, nodata=None)
 
-    # 每个单元的 mask 只算一次，两期都用
     unit_masks = []
     for i in range(len(units)):
         unit_masks.append(t1_grid.polygons_to_mask(units.iloc[[i]], profile) == 1)
@@ -308,19 +257,17 @@ def run(cfg):
         survey = "AS" + cfg["time_" + time]
         print("  ---", time, survey)
 
-        # 3. 三类景观
-        lulc, _ = utils.read_tif(processed / ("lulc_" + time + ".tif"))   # 只要数组，profile 已经有了
+        lulc, _ = utils.read_tif(processed / ("lulc_" + time + ".tif"))
         land = make_landscape(lulc, lines, cfg)
         path = processed / ("landscape_" + time + ".tif")
         utils.save_tif(land, path, profile, nodata=nodata)
         landscape_paths.append(path)
 
-        # 4. 全瑞士识别两种斑块
-        #    森林斑块：被非森林和障碍切开 -> 森林本身的破碎化
-        #    开放斑块：森林 + 其他，只被障碍切开 -> Jaeger et al. (2008) 意义上的景观破碎化
+        # forest patches: cut by non-forest and barriers (forest fragmentation)
+        # open patches: forest + other, cut only by barriers (landscape fragmentation, Jaeger et al. 2008)
         forest_labels, forest_ids, forest_size = label_patches(land == FOREST, nb)
         open_labels, open_ids, open_size = label_patches((land == FOREST) | (land == OTHER), nb)
-        print("  森林斑块数（全瑞士）：", len(forest_ids), "  开放斑块数：", len(open_ids))
+        print("  forest patches (CH):", len(forest_ids), "  open patches:", len(open_ids))
 
         for i in range(len(units)):
             unit_mask = unit_masks[i] & (land != nodata)
@@ -336,16 +283,15 @@ def run(cfg):
             array, transform = clip_to_unit(path, units.geometry.iloc[i], nodata)
             record.update(pylandstats_metrics(array, transform, cfg))
             records.append(record)
-            print("   ", record["unit"], "完成")
+            print("   ", record["unit"], "done")
 
-    # 5. 输出
     table = pd.DataFrame(records).round(3)
     table.to_csv(cfg["paths"]["tables"] / "T2_metrics.csv", index=False)
-    wide = change_table(table, cfg["paths"]["tables"] / "T2_change.csv")
+    change_table(table, cfg["paths"]["tables"] / "T2_change.csv")
     quicklook(landscape_paths, ["AS" + cfg["time_A"], "AS" + cfg["time_B"]],
               units.geometry.iloc[0], nodata, cfg["paths"]["figures"] / "T2_landscape_quicklook.png")
 
     show = ["unit", "time", "forest_ha", "meff_forest_cbc_km2", "meff_forest_cut_km2",
             "meff_open_cbc_km2", "ED_m_per_ha", "PD_per_100ha", "LPI_pct"]
     print(table[show].to_string(index=False))
-    print("  Task 2 完成。")
+    print("  Task 2 done.")
