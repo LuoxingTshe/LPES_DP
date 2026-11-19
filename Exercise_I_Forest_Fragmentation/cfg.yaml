@@ -9,6 +9,12 @@ paths:
 files:
   lulc: LULC Data - Arealstatistik/arealstatistik-zeitreihe_2056.gpkg
   boundaries: swissBOUNDARIES3D/swissBOUNDARIES3D_1_5_LV95_LN02.gdb
+  tlmregio: independent variables/swisstlmregio_2026_2056.gdb/swissTLMRegio_Product.gdb
+  biogeo: biogeographische_regionen/BiogeographischeRegionen.gdb
+  dem: independent variables/DHM25_MM_ASCII_GRID.zip/ASCII_GRID_1part/dhm25_grid_raster.asc
+  statpop: independent variables/statistik-bevoelkerung_haushalte_2017_2056.gpkg
+  access: independent variables/erreichbarkeit-miv_2056.gpkg
+  bauzonen: independent variables/BauzonenSchweiz_ZonesabatirSuisse_2017/ch_are_bauzonen.shp
 
 time_A: "85"          # AS85 (BE ≈ 1981)
 time_B: "18"          # AS18 (BE ≈ 2014); AS25 is empty for Bern
@@ -20,3 +26,36 @@ units:
   rural: 584          # Lauterbrunnen
 neighbourhood: 4      # Task 2 斑块连通性 + Task 3 edge；敏感性检验时改成 8
 nodata: 255
+
+# ---------------- Task 2: fragmentation geometry FG1 ----------------
+# Arealstatistik 障碍类：1–14 建筑及周边，15–23 交通用地，24–30 特殊城市用地
+# 31–36（公园、运动场、高尔夫、露营、园圃、墓地）不算障碍
+barrier_codes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+# swissTLMRegio 道路 OBJVAL：301 Autob_Ri, 302 Autobahn, 303 Autostr, 304/305 HauptStrAB,
+# 306/307 VerbindStr, 201–205 对应匝道；不含 NebenStr、Fahrsträsschen、Fussweg
+road_codes: [201, 202, 203, 204, 205, 301, 302, 303, 304, 305, 306, 307]
+# 铁路 OBJVAL：1 NS_Bahn, 2 SS_Bahn, 3 MS_Bahn, 5/6 Autoverlad；不含 4 Luftseilbahn, 7 Standseilbahn
+rail_codes: [1, 2, 3, 5, 6]
+# 伯尔尼州内的生物地理区：R1 Jura, R2 Mittelland, R3 Alpennordflanke（R4 在州内只有 1.5 km²，不要）
+regions: [R1, R2, R3]
+
+# ---------------- Task 3: edge / interior ----------------
+edge_width_m: 100     # 边缘带宽度；100 m 网格上 = 腐蚀 1 次
+outlook_years: 20     # 从 B 的调查年份往后外推的年数
+
+# ---------------- Task 4: drivers of forest change ----------------
+model_regions: ["Mittelland (BE part)", "Alpennordflanke (BE part)"]
+statpop_layer: statistik-bevoelkerung_haushalte_2017_ha_2056
+access_field: Strasse_Erreichb_EWAP     # 道路可达性：可到达的居民 + 工作岗位
+# 居住和城市用地 1–36（比 FG1 的障碍类多了公园、运动场等），用于 settl_chg
+settlement_codes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+# gain 模型的 0 只取理论上能长成森林的非森林：
+# 37–49 农业用地，55–60 其他树木覆盖，64 灌丛，65 非生产性草本，67 湿地
+# 不含：建成区 1–36、水体 61–62、各类构筑物 63/66/68/71、岩石 69、碎石 70、冰川 72
+gain_eligible_codes: [37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 55, 56, 57, 58, 59, 60, 64, 65, 67]
+window: 5             # 邻域窗口（像元）= 500 m
+sample_step: 3        # 系统抽样间隔（像元）= 300 m，减轻空间自相关
+max_predictors: 5
+r_max: 0.7
+vif_max: 5
+candidates: [elev, slope, tri, tpi, dist_water, pop_500m, access_road, dist_bauzone, dist_mainroad, settl_chg, forest_share, dist_edge, patch_size]

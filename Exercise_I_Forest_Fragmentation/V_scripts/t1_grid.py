@@ -133,7 +133,7 @@ def make_forest(lulc, forest_codes, nodata):
 # ---------------------------------------------------------------------------
 # 4. 研究范围 mask
 # ---------------------------------------------------------------------------
-def polygons_to_mask(gdf, meta):
+def polygons_to_mask(gdf, profile):
     """
     把面要素栅格化成 0/1 mask。
 
@@ -150,15 +150,15 @@ def polygons_to_mask(gdf, meta):
 
     mask = rasterize(
         shapes,
-        out_shape=(meta["nrow"], meta["ncol"]),
-        transform=utils.creatematrix(meta),
+        out_shape=(profile["height"], profile["width"]),
+        transform=profile["transform"],
         fill=0,
         dtype="uint8",
     )
     return mask
 
 
-def unit_masks(cfg, meta):
+def unit_masks(cfg, profile):
     """
     生成三个研究单元的 mask，返回字典 {"canton": ..., "urban": ..., "rural": ...}。
 
@@ -174,7 +174,7 @@ def unit_masks(cfg, meta):
     if len(canton) == 0:
         raise ValueError("找不到 KANTONSNUMMER = " + str(cfg["units"]["canton"]))
     print("  州：", canton["NAME"].iloc[0])
-    masks["canton"] = polygons_to_mask(canton, meta)
+    masks["canton"] = polygons_to_mask(canton, profile)
 
     # --- 市镇 ---
     municipalities = gpd.read_file(gdb_path, layer=MUNICIPALITY_LAYER)
@@ -184,7 +184,7 @@ def unit_masks(cfg, meta):
         if len(selected) == 0:
             raise ValueError("找不到 BFS_NUMMER = " + str(bfs))
         print("  市镇（" + key + "）：", selected["NAME"].iloc[0], "BFS", bfs)
-        masks[key] = polygons_to_mask(selected, meta)
+        masks[key] = polygons_to_mask(selected, profile)
 
     return masks
 
@@ -306,7 +306,8 @@ def run(cfg):
     # 2. 建网格，算每个点的行列号
     meta = build_grid_meta(df)
     rows, cols = point_indices(df, meta)
-    utils.save_meta(meta, processed / "grid_meta.json")
+    # meta 只在本阶段用来落点；写成 tif 后，网格信息就保存在 tif 的 profile 里
+    profile = utils.new_profile(meta)
 
     # 3. 72 类栅格（0 = 无数据）
     #    fillna(0)：万一某个点没有类别，当作无数据处理
@@ -314,19 +315,19 @@ def run(cfg):
     values_b = df[col_b].fillna(0).to_numpy().astype(np.uint8)
     lulc_a = to_grid(values_a, rows, cols, meta, fill=0, dtype=np.uint8)
     lulc_b = to_grid(values_b, rows, cols, meta, fill=0, dtype=np.uint8)
-    utils.save_tif(lulc_a, processed / "lulc_A.tif", meta, nodata=0)
-    utils.save_tif(lulc_b, processed / "lulc_B.tif", meta, nodata=0)
+    utils.save_tif(lulc_a, processed / "lulc_A.tif", profile, nodata=0)
+    utils.save_tif(lulc_b, processed / "lulc_B.tif", profile, nodata=0)
 
     # 4. 森林栅格
     forest_a = make_forest(lulc_a, cfg["forest_codes"], nodata)
     forest_b = make_forest(lulc_b, cfg["forest_codes"], nodata)
-    utils.save_tif(forest_a, processed / "forest_A.tif", meta, nodata=nodata)
-    utils.save_tif(forest_b, processed / "forest_B.tif", meta, nodata=nodata)
+    utils.save_tif(forest_a, processed / "forest_A.tif", profile, nodata=nodata)
+    utils.save_tif(forest_b, processed / "forest_B.tif", profile, nodata=nodata)
 
     # 5. 研究范围 mask
-    masks = unit_masks(cfg, meta)
+    masks = unit_masks(cfg, profile)
     for unit_name in masks:
-        utils.save_tif(masks[unit_name], processed / ("mask_" + unit_name + ".tif"), meta, nodata=None)
+        utils.save_tif(masks[unit_name], processed / ("mask_" + unit_name + ".tif"), profile, nodata=None)
 
     # 6. 检查用的表和图
     transition_table(df, rows, cols, masks["canton"], col_a, col_b, tables / "T1_transition_72.csv")

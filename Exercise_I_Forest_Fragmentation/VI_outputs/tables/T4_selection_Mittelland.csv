@@ -1,0 +1,14 @@
+variable,selected,aic_univariate,step2_correlation,vif,step4_aic
+elev,True,1117.072,kept,1.857,
+slope,False,1109.562,kept,1.407,dropped (AIC 973.4 -> 974.7)
+tri,False,1109.728,dropped (|r| > 0.7 with slope),,
+tpi,False,1118.256,kept,1.085,dropped (AIC 974.2 -> 973.4)
+dist_water,False,1119.708,kept,1.146,dropped (AIC 978.9 -> 977.3)
+pop_500m,True,1117.908,kept,1.63,
+access_road,True,1102.066,kept,1.537,
+dist_bauzone,False,1117.026,kept,1.724,dropped (AIC 976.4 -> 975.1)
+dist_mainroad,False,1112.437,kept,1.511,dropped (AIC 977.3 -> 976.4)
+settl_chg,True,1001.002,kept,1.085,
+forest_share,False,1117.418,kept,2.336,dropped (AIC 975.1 -> 974.2)
+dist_edge,False,1119.701,dropped (|r| > 0.7 with forest_share),,
+patch_size,True,1116.316,kept,1.959,

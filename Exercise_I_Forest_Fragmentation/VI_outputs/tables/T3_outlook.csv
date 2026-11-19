@@ -1,0 +1,7 @@
+unit,scale,year_A,year_B,ratio_A,ratio_B,ratio_chg_per_10yr,year_future,ratio_future,edge_share_pct_A,edge_share_pct_B,edge_share_pct_future
+Canton of Bern,canton,1980.9,2014.0,1.581,1.711,0.039,2034.0,1.79,61.26,63.109,64.226
+Bern (urban),municipality,1981.0,2013.0,0.708,0.815,0.033,2033.0,0.882,41.435,44.901,47.067
+Lauterbrunnen (rural),municipality,1980.3,2014.3,3.26,3.187,-0.021,2034.3,3.144,76.525,76.118,75.879
+Alpennordflanke (BE part),region,1980.9,2014.0,2.281,2.468,0.056,2034.0,2.581,69.52,71.161,72.153
+Mittelland (BE part),region,1980.9,2014.0,1.147,1.278,0.04,2034.0,1.357,53.425,56.109,57.731
+Jura (BE part),region,1980.9,2014.0,1.0,1.001,0.0,2034.0,1.002,49.998,50.025,50.041

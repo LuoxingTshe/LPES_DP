@@ -1,0 +1,7 @@
+unit,forest_A_ha,forest_B_ha,gross_gain_ha,gross_loss_ha,net_ha,net_pct,model
+Canton of Bern,154158,155723,8395,6830,1565,1.02,gain
+Bern (urban),1675,1668,38,45,-7,-0.42,loss
+Lauterbrunnen (rural),1778,2026,326,78,248,13.95,gain
+Alpennordflanke (BE part),79987,82117,6952,4822,2130,2.66,gain
+Mittelland (BE part),49319,48818,608,1109,-501,-1.02,loss
+Jura (BE part),24852,24788,835,899,-64,-0.26,loss

@@ -1,0 +1,13 @@
+unit,scale,time,forest_ha,edge_ha,interior_ha,edge_share_pct,edge_interior_ratio
+Canton of Bern,canton,A,151201,92626,58575,61.26,1.581
+Bern (urban),municipality,A,1477,612,865,41.435,0.708
+Lauterbrunnen (rural),municipality,A,1721,1317,404,76.525,3.26
+Alpennordflanke (BE part),region,A,78803,54784,24019,69.52,2.281
+Mittelland (BE part),region,A,47983,25635,22348,53.425,1.147
+Jura (BE part),region,A,24415,12207,12208,49.998,1.0
+Canton of Bern,canton,B,152770,96412,56358,63.109,1.711
+Bern (urban),municipality,B,1461,656,805,44.901,0.815
+Lauterbrunnen (rural),municipality,B,1968,1498,470,76.118,3.187
+Alpennordflanke (BE part),region,B,80898,57568,23330,71.161,2.468
+Mittelland (BE part),region,B,47502,26653,20849,56.109,1.278
+Jura (BE part),region,B,24370,12191,12179,50.025,1.001

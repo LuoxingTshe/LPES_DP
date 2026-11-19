@@ -1,0 +1,13 @@
+unit,scale,time,survey,area_ha,meff_forest_cbc_km2,meff_open_cbc_km2,forest_ha,ED_m_per_ha,PD_per_100ha,LPI_pct,n_patches,AREA_MN_ha,meff_forest_cut_km2
+Canton of Bern,canton,A,AS85,593884,7.669,4789.624,151201.0,29.327,1.892,2.117,11238,13.454,3.923
+Bern (urban),municipality,A,AS85,5162,1.583,15.826,1477.0,19.334,1.724,7.4,89,16.596,0.55
+Lauterbrunnen (rural),municipality,A,AS85,16465,0.509,12817.906,1721.0,15.985,1.19,2.472,196,8.781,0.141
+Alpennordflanke (BE part),region,A,AS85,347196,1.969,8100.504,78803.0,30.836,2.169,0.87,7530,10.465,1.538
+Mittelland (BE part),region,A,AS85,188212,0.888,53.864,47983.0,24.267,1.384,0.784,2604,18.427,0.805
+Jura (BE part),region,A,AS85,58321,63.509,340.495,24415.0,36.222,2.094,21.557,1221,19.996,28.053
+Canton of Bern,canton,B,AS18,593884,7.91,4735.225,152770.0,30.492,1.956,2.141,11619,13.148,4.162
+Bern (urban),municipality,B,AS18,5162,1.506,15.413,1461.0,20.748,1.879,7.4,97,15.062,0.536
+Lauterbrunnen (rural),municipality,B,AS18,16465,1.03,12717.714,1968.0,17.522,1.124,3.383,185,10.638,0.239
+Alpennordflanke (BE part),region,B,AS18,347196,2.16,8010.299,80898.0,32.31,2.239,1.066,7774,10.406,1.826
+Mittelland (BE part),region,B,AS18,188212,0.838,52.116,47502.0,25.265,1.466,0.762,2760,17.211,0.757
+Jura (BE part),region,B,AS18,58321,64.989,329.401,24370.0,36.026,2.061,21.803,1202,20.275,28.932
